@@ -17,12 +17,13 @@ function parseDom(dom) {
                     ratingBoxNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             let year = dom.evaluate('.//div[contains(@class, "filmPreview__extraYear")]',
                 ratingBoxNode, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            arr.push({
-                title: title.textContent,
-                rate: rate.r,
-                date: rate.d,
-                year: year.textContent
-            });
+            let idTmdb = searchMovie(title.textContent, year.textContent);
+            if (idTmdb > 0)
+                arr.push({
+                    idTmdb: idTmdb,
+                    rate: rate.r,
+                    date: rate.d
+                });
             ratingBoxNode = iterator.iterateNext();
         }
         return arr;
@@ -30,6 +31,29 @@ function parseDom(dom) {
         console.log('Wystąpił problem z parsowaniem strony ' + e);
         return [];
     }
+}
+
+function sleep(milliseconds) {
+    var start = new Date().getTime();
+    for (var i = 0; i < 1e7; i++) {
+        if ((new Date().getTime() - start) > milliseconds) {
+            break;
+        }
+    }
+}
+
+function searchMovie(title, year) {
+    let xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET",
+        "https://api.themoviedb.org/3/search/movie?api_key=TMDB_API_KEY" +
+        "query=" + encodeURIComponent(title) + "&year=" + year,
+        false);
+    sleep(250);
+    xmlhttp.send(); // sleep is needed, because of TMDB API restrictions
+    let result = JSON.parse(xmlhttp.responseText);
+    if (result["total_results"] > 0)
+        return result["results"][0]["id"];
+    return -1;
 }
 
 function getSourceAsDOM(url) {
