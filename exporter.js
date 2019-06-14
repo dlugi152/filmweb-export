@@ -46,7 +46,7 @@ function searchMovie(title, year) {
     let xmlhttp = new XMLHttpRequest();
     xmlhttp.open("GET",
         "https://api.themoviedb.org/3/search/movie?api_key=TMDB_API_KEY" +
-        "query=" + encodeURIComponent(title) + "&year=" + year,
+        "&query=" + encodeURIComponent(title) + "&year=" + year,
         false);
     sleep(250);
     xmlhttp.send(); // sleep is needed, because of TMDB API restrictions
@@ -64,13 +64,17 @@ function getSourceAsDOM(url) {
     return parser.parseFromString(xmlhttp.responseText, "text/html");
 }
 
-function copyToClipboard(text) {
-    let dummy = document.createElement("textarea");
-    document.body.appendChild(dummy);
-    dummy.value = text;
-    dummy.select();
-    document.execCommand("copy");
-    document.body.removeChild(dummy);
+function download(filename, text) {
+    let element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
 }
 
 function main() {
@@ -78,6 +82,7 @@ function main() {
         document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.textContent;
     let pages = Math.ceil(ratesNum / 25);
     let url = window.location.href;
+    console.log("Rozpoczynam pobieranie, cierpliwości...");
     let allRates = parseDom(document);
     console.log("pobrano " + Math.min(25, ratesNum) + " z " + ratesNum);
     for (let i = 2; i <= pages; i++) {
@@ -85,9 +90,9 @@ function main() {
         allRates = allRates.concat(parseDom(dom));
         console.log("pobrano " + Math.min(25 * i, ratesNum) + " z " + ratesNum);
     }
-    copyToClipboard(JSON.stringify(allRates));
+    download('exported.json', JSON.stringify(allRates));
     console.log("GOTOWE!");
-    console.log("Oceny znajdują się w Twoim schowku. Wklej je w formularzu spowrotem na stronie");
+    console.log("Oceny zostały pobrane! Wyślij ten plik spowrotem na stronie.");
     console.log("Twoje oceny:");
     console.log(allRates);
 }
